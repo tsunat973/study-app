@@ -1,10 +1,12 @@
 let books = [];
 
-const savedBooks = localStorage.getItem('books');
-
-if (savedBooks) {
-    books = JSON.parse(savedBooks);
-}
+fetch('http://localhost:3000/api/books')
+    .then(res => res.json())
+    .then(data => {
+        books = data;
+        renderBooks();
+        renderTodayTasks();
+    })
 
 const todayStr = new Date().toLocaleDateString();
 const completedToday = JSON.parse(localStorage.getItem('completedToday') || '{}');
@@ -83,26 +85,25 @@ bookForm.addEventListener('submit', function (e) {
     e.preventDefault();
 
     const book = {
-
         title: titleInput.value,
         totalPages: Number(totalPagesInput.value),
         currentPage: Number(currentPageInput.value),
         deadline: deadlineInput.value
-
     };
 
-    books.push(book);
-
-    localStorage.setItem('books', JSON.stringify(books));
-    renderBooks();
-    renderTodayTasks();
-
-    //　←ここでフォームを空にする
-    bookForm.reset();
-    console.log(books);
-
+    fetch('http://localhost:3000/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(book)
+    })
+        .then(res => res.json())
+        .then(newBook => {
+            books.push(newBook);
+            renderBooks();
+            renderTodayTasks();
+            bookForm.reset();
+        });
 })
-
 //一覧表示機能
 
 function renderBooks() {
@@ -134,14 +135,14 @@ function renderBooks() {
         const deleteBtn = div.querySelector('.deleteBtn');
 
         deleteBtn.addEventListener('click', () => {
-
-            books.splice(index, 1);
-
-            localStorage.setItem('books', JSON.stringify(books));
-
-            renderBooks();
-            renderTodayTasks();
-
+            fetch(`http://localhost:3000/api/books/${book.id}`, {
+                method: 'DELETE'
+            })
+                .then(() => {
+                    books.splice(index, 1);
+                    renderBooks();
+                    renderTodayTasks();
+                });
         });
 
         bookList.append(div);
@@ -155,7 +156,7 @@ function renderTodayTasks() {
     taskContainer.innerHTML = '';
 
     //教材がない場合(既存)
-    if(books.length === 0) {
+    if (books.length === 0) {
         taskContainer.innerHTML = '<p>教材を追加してください</p>';
         return;
     }
@@ -163,7 +164,7 @@ function renderTodayTasks() {
     const completed = JSON.parse(localStorage.getItem('completedToday'));
 
     //全タスク完了チェック
-    const allDone = books.every((_, index) => 
+    const allDone = books.every((_, index) =>
         completed.indexes.includes(index)
     );
 
@@ -171,7 +172,7 @@ function renderTodayTasks() {
         taskContainer.innerHTML = '<P>🎊今日のタスク完了！</p>';
         return;
     }
-    
+
     books.forEach((book, index) => {
         const completed = JSON.parse(localStorage.getItem('completedToday'));
         if (completed.indexes.includes(index)) return;
@@ -262,6 +263,3 @@ clearBtn.addEventListener('click', () => {
 
 
 
-
-renderBooks();
-renderTodayTasks();

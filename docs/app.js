@@ -160,7 +160,7 @@ function renderTodayTasks() {
         taskContainer.innerHTML = '<p>教材を追加してください</p>';
         return;
     }
-
+//完了済みデータを取得
     const completed = JSON.parse(localStorage.getItem('completedToday'));
 
     //全タスク完了チェック
@@ -175,6 +175,8 @@ function renderTodayTasks() {
 
     books.forEach((book, index) => {
         const completed = JSON.parse(localStorage.getItem('completedToday'));
+        //完了済みは飛ばす
+
         if (completed.indexes.includes(index)) return;
 
         const today = new Date();
@@ -221,8 +223,15 @@ function renderTodayTasks() {
 
             //少し待ってから処理
             setTimeout(() => {
-                books[index].currentPage = endPage;
-                localStorage.setItem('books', JSON.stringify(books));
+              fetch(`http://localhost:3000/api/books/${book.id}`, {
+                method: 'PUT',
+                headers:  {'Content-Type': 'application/json' },
+                body:  JSON.stringify({ currentPage: endPage })
+              })
+                  .then(res => res.json())
+                  .then(updatedBook => {
+                    books[index].currentPage = updatedBook.currentPage;
+                  })
 
                 //今日完了済みに追加
                 const completed = JSON.parse(localStorage.getItem('completedToday'));

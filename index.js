@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = 3000;
 app.use(express.json());
+app.use(express.static('public'));
 
 //　ダミーのタスクデータ
 let books = [
@@ -9,9 +10,6 @@ let books = [
     { id: 2, title: "数学の問題集", totalPages: 300, currentPage: 50, deadline: "2026-07-15" },
 ];
 
-app.get('/', (req, res) => {
-    res.json({ message: 'Hello Express!' });
-});
 
 app.get('/api/books', (req, res) => {
     res.json(books);
